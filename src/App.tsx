@@ -17,20 +17,36 @@ function getAutoCompleteResults(query:string): Promise<string[]> {
 
 }
 
+function useDebounceValue(value:string, time=250) {
+  const [debounceValue, setDebounceValue] = useState(value)
+
+  useEffect(
+    () => {
+      const timeout = setTimeout(() => {setDebounceValue(value)}, time)
+    return () => {
+      clearTimeout(timeout)
+    }
+    
+    }
+  ,[value, time]);
+  return debounceValue
+}
+
 
 function App() {
   const [query, setQuery] = useState('')
   const [suggestions, setSuggestions] = useState<string[]>([])
+  const debounceQuery = useDebounceValue(query)
   useEffect(() => {
     (async ()=> {
       setSuggestions([])
-      if (query.length > 0) {
-        console.log(query)
-        const data = await getAutoCompleteResults(query)
+      if (debounceQuery.length > 0) {
+        console.log(debounceQuery)
+        const data = await getAutoCompleteResults(debounceQuery)
         setSuggestions(data)
       }
     })()
-  }, [query])
+  }, [debounceQuery])
 
   return (
     <div className=''>
