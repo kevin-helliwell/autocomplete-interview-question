@@ -4,10 +4,13 @@ import './App.css'
 
 // Interview Question: Make an autocomplete input with a mock API and display the results of what the user put in
 
-function getAutoCompleteResults(query:string): Promise<string[]> {
+function getAutoCompleteResults(query:string, signal?:AbortSignal): Promise<string[]> {
   const wowClasses = ["Death Knight", "Demon Hunter", "Druid", "Evoker", "Hunter", "Mage", "Monk", "Paladin", "Priest", "Rogue", "Shaman", "Warlock", "Warrior" ];
   return new Promise((resolve, reject) => {
     setTimeout(() => {
+      if (signal?.aborted) {
+        reject(signal.reason)
+      }
       resolve(
         wowClasses.filter((wowClass) => wowClass.toLowerCase().includes(query.toLowerCase())
         )
@@ -37,15 +40,19 @@ function App() {
   const [query, setQuery] = useState('')
   const [suggestions, setSuggestions] = useState<string[]>([])
   const debounceQuery = useDebounceValue(query)
+  const controller = new AbortController()
+
   useEffect(() => {
+    const signal = controller.signal;
     (async ()=> {
       setSuggestions([])
       if (debounceQuery.length > 0) {
         console.log(debounceQuery)
-        const data = await getAutoCompleteResults(debounceQuery)
+        const data = await getAutoCompleteResults(debounceQuery, signal)
         setSuggestions(data)
       }
     })()
+    return () => controller.abort("cancel request")
   }, [debounceQuery])
 
   return (
